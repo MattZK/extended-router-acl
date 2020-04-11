@@ -1,0 +1,32 @@
+{
+  "name": "extended-router-acl",
+  "version": "0.1.0",
+  "description": "Extended Router ACL Middleware for Express",
+  "main": "libs",
+  "scripts": {
+    "build": "tsc --build",
+    "build:watch": "tsc --build --watch",
+    "test": "exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MattZK/extended-router-acl.git"
+  },
+  "author": "Matthias Willemsen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MattZK/extended-router-acl/issues"
+  },
+  "homepage": "https://github.com/MattZK/extended-router-acl#readme",
+  "dependencies": {
+    "js-yaml": "^3.13.1",
+    "minimatch": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/js-yaml": "^3.12.3",
+    "@types/minimatch": "^3.0.3",
+    "@types/node": "^13.11.1",
+    "express": "^4.17.1"
+  }
+}
