@@ -5,7 +5,8 @@
   "main": "libs",
   "scripts": {
     "build": "tsc --build",
-    "build:watch": "tsc --build --watch"
+    "build:watch": "tsc --build --watch",
+    "test": "exit 0"
   },
   "repository": {
     "type": "git",
