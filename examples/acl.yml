@@ -1,0 +1,17 @@
+- resource: /
+  permissions:
+    public:
+      - GET
+- resource: /users
+  permissions:
+    admin:
+      - GET
+      - POST
+      - DELETE
+    user:
+      - GET
+- resource: /users/*
+  permissions:
+    admin: "*"
+    user:
+      - GET
