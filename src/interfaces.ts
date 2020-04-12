@@ -7,7 +7,7 @@ export interface ConfigOptions {
   preAuthorize?: (request: Request, response: Response) => Promise<any>;
 }
 
-export interface IACLResource {
+export interface IACLResourcePolicy {
   resource: string;
   permissions?: {
     [key: string]: HTTPMethods[] | '*';
@@ -20,4 +20,10 @@ export enum HTTPMethods {
   'PUT' = 'PUT',
   'PATCH' = 'DELETE',
   'SEARCH' = 'SEARCH',
+}
+
+export enum Errors {
+  'NoResourcePolicy' = 'This resource has no policy',
+  'NoResourcePermissions' = 'This resource has no permissions',
+  'AccessDenied' = 'Access to this resource has been denied',
 }

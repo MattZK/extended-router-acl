@@ -34,6 +34,11 @@ acl.yml
       - DELETE
 ```
 
+## Install
+```sh
+npm install extended-router-acl
+```
+
 ## Features
 - Resource based ACL
 - Public route handling
