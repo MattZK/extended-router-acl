@@ -1,61 +1,71 @@
 import { NextFunction, Request, Response } from 'express';
 import minimatch from 'minimatch';
 
-import { findRole, parseACLFile } from './helpers';
-import { ConfigOptions, HTTPMethods, IACLResource } from './interfaces';
+import { findRole, isAllowedInRole, isAllowedPublicly, isHookSet, parseACLFile } from './helpers';
+import { ConfigOptions, Errors, IACLResourcePolicy } from './interfaces';
 
-let rules: IACLResource[];
+let rules: IACLResourcePolicy[];
 let options: ConfigOptions;
 
+/**
+ * Configuration
+ * @param values ACL Configuration Options
+ */
 export function config(values: ConfigOptions) {
   rules = parseACLFile(values.file!);
   options = values;
 }
 
+/**
+ * Middleware function
+ * @param request Express Request
+ * @param response Express Response
+ * @param next Express NextFunction
+ */
 export async function authorize(request: Request, response: Response, next: NextFunction) {
-  const resourceRule = rules.find((rule) => minimatch(request.path, rule.resource));
-  if (!resourceRule) { return fail(request, response, 'RouteHasNoRule'); }
-  if (!resourceRule.permissions) { return fail(request, response, 'RouteHasNoPermissions'); }
-
-  if (
-    resourceRule!.permissions!.public && (
-      resourceRule!.permissions!.public === '*' ||
-      resourceRule!.permissions!.public.indexOf(request.method as HTTPMethods) !== -1
-    )
-  ) {
-    return success(request, response, next);
-  }
-
-  if (typeof options.preAuthorize === 'function') {
-    await options.preAuthorize(request, response);
-  }
-
-  const role = findRole(request as any);
-
-  const allowedMethods = resourceRule.permissions![role];
-
-  if (allowedMethods === undefined) {
-    return fail(request, response, 'RouteNotAllowed');
-  } else if (allowedMethods === '*') {
-    return success(request, response, next);
-  } else if (allowedMethods.indexOf(request.method as HTTPMethods) !== -1) {
-    return success(request, response, next);
-  } else {
-    return fail(request, response, 'MethodNotAllowed');
-  }
+  checkPolicy(request, response).then(() => {
+    succeed(request, response, next);
+  }).catch((error: Errors) => {
+    fail(request, response, error);
+  });
 }
 
-function success(request: Request, response: Response, next: NextFunction) {
-  if (typeof options.onSuccess === 'function') {
-    options.onSuccess(request, response, next);
+function checkPolicy(request: Request, response: Response): Promise<any> {
+  return new Promise(async (resolve, reject) => {
+    const resourcePolicy = rules.find((rule) => minimatch(request.path, rule.resource));
+
+    if (!resourcePolicy) { return reject(Errors.NoResourcePolicy); }
+    if (!resourcePolicy.permissions) { return reject(Errors.NoResourcePermissions); }
+
+    if (isAllowedPublicly(request, resourcePolicy)) {
+      return resolve();
+    }
+
+    if (isHookSet(options.preAuthorize)) {
+      await options.preAuthorize!(request, response);
+    }
+
+    const role = findRole(request as any);
+
+    if (isAllowedInRole(request, role, resourcePolicy)) {
+      return resolve();
+    } else {
+      return reject(Errors.AccessDenied);
+    }
+  });
+}
+
+function succeed(request: Request, response: Response, next: NextFunction) {
+  if (isHookSet(options.onSuccess)) {
+    options.onSuccess!(request, response, next);
   } else {
     next();
   }
 }
 
 function fail(request: Request, response: Response, reason: string) {
-  if (typeof options.onFail === 'function') {
-    options.onFail(request, response, reason);
+  if (isHookSet(options.onFail)) {
+    options.onFail!(request, response, reason);
   } else {
     response.status(401).send({ reason });
   }
